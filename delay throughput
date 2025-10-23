@@ -1,0 +1,68 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+import pandas as pd
+
+def generate_random_curves():
+    # Vehicle counts
+    vehicles = [50, 100, 150, 200]
+    x = np.arange(1, 11)  # simulation rounds or time slots (1–10)
+    
+    # Base directory setup
+    base_dir = "Results/DB1"
+    os.makedirs(f"{base_dir}/Throughput", exist_ok=True)
+    os.makedirs(f"{base_dir}/Delay", exist_ok=True)
+
+    # Random seed for reproducibility
+    np.random.seed(42)
+
+    # Loop through each vehicle count
+    for v in vehicles:
+        # Generate Throughput (similar to PRC - rises and saturates)
+        throughput = np.tanh(np.linspace(0, 2, len(x))) * (v / 200) * 100
+        throughput += np.random.uniform(-2, 2, len(x))  # add small random variation
+
+        # Generate Delay (opposite of Throughput - decreases and stabilizes)
+        delay = (1 - np.tanh(np.linspace(0, 2, len(x)))) * (v / 50) * 10
+        delay += np.random.uniform(-0.5, 0.5, len(x))  # small noise
+
+        # Ensure no negative values
+        throughput = np.clip(throughput, 0, None)
+        delay = np.clip(delay, 0, None)
+
+        # Save CSV files
+        throughput_data = pd.DataFrame({"Round": x, "Throughput (Mbps)": throughput})
+        delay_data = pd.DataFrame({"Round": x, "Delay (ms)": delay})
+
+        throughput_csv = f"{base_dir}/Throughput/Throughput_{v}_vehicles.csv"
+        delay_csv = f"{base_dir}/Delay/Delay_{v}_vehicles.csv"
+
+        throughput_data.to_csv(throughput_csv, index=False)
+        delay_data.to_csv(delay_csv, index=False)
+
+        # Plot Throughput curve
+        plt.figure()
+        plt.plot(x, throughput, marker='o', linewidth=2, label=f'{v} Vehicles')
+        plt.title(f"Throughput Curve ({v} Vehicles)")
+        plt.xlabel("Round")
+        plt.ylabel("Throughput (Mbps)")
+        plt.grid(True, linestyle="--", alpha=0.6)
+        plt.legend()
+        plt.savefig(f"{base_dir}/Throughput/Throughput_{v}_vehicles.png")
+        plt.close()
+
+        # Plot Delay curve
+        plt.figure()
+        plt.plot(x, delay, marker='s', linewidth=2, color='red', label=f'{v} Vehicles')
+        plt.title(f"Delay Curve ({v} Vehicles)")
+        plt.xlabel("Round")
+        plt.ylabel("Delay (ms)")
+        plt.grid(True, linestyle="--", alpha=0.6)
+        plt.legend()
+        plt.savefig(f"{base_dir}/Delay/Delay_{v}_vehicles.png")
+        plt.close()
+
+    print("✅ Throughput and Delay curves generated and saved successfully in 'Results/DB1/' folders.")
+
+if __name__ == "__main__":
+    generate_random_curves()
